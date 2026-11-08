@@ -109,13 +109,13 @@ async def gemini_web_deep_research(topic: str) -> str:
 @mcp.tool()
 async def gemini_web_account_info() -> str:
     """
-    Kiểm tra trạng thái tài khoản Gemini Web: quota còn lại, thời gian reset, danh sách model khả dụng, nguồn cookie.
+    Kiểm tra trạng thái Multi-Account Cookie Pool: quota còn lại, thời gian reset, danh sách model khả dụng, nguồn cookie và danh sách từng tài khoản trong pool.
     
     Returns:
-        Bản tóm tắt JSON định dạng đẹp về tình trạng tài khoản và model.
+        Bản tóm tắt JSON định dạng đẹp về tình trạng Multi-Account Pool và từng tài khoản.
     """
     try:
-        status = await bridge.get_status()
+        status = await bridge.get_status(check_all=True)
         return json.dumps(status, ensure_ascii=False, indent=2)
     except Exception as e:
         return f"Lỗi kiểm tra thông tin tài khoản: {str(e)}"

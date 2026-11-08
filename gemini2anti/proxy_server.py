@@ -57,8 +57,8 @@ class ChatCompletionRequest(BaseModel):
 async def health_check():
     """Kiểm tra sức khỏe server và kết nối Gemini Web."""
     try:
-        status_info = await bridge.get_status()
-        return {"status": "ok", "gemini_web": status_info}
+        status_info = await bridge.get_status(check_all=False)
+        return {"status": "ok", "gemini_web": status_info, "pool_summary": status_info.get("pool_summary")}
     except Exception as e:
         return {"status": "degraded", "error": str(e)}
 

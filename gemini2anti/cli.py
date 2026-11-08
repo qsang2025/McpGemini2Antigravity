@@ -14,6 +14,7 @@ from pathlib import Path
 
 from gemini2anti.config import (
     get_gemini_credentials,
+    get_gemini_account_pool,
     extract_cookies_from_browser,
     get_default_model,
     HAS_ROOKIEPY,
@@ -39,40 +40,58 @@ def cmd_check(args):
             else:
                 print(f"  ❌ {b.upper()}: Không tìm thấy Cookie Gemini")
 
-    # 2. Kiểm tra thông tin đăng nhập được giải quyết
-    psid, psidts, psidcc, source = get_gemini_credentials()
-    print(f"\n[2] Nguồn xác thực hiện hành: {source}")
-    if not psid:
-        print("  ❌ Không có Cookie hợp lệ nào được phát hiện.")
+    # 2. Kiểm tra Multi-Account Cookie Pool
+    pool = get_gemini_account_pool()
+    print(f"\n[2] Multi-Account Cookie Pool ({len(pool)} tài khoản được phát hiện):")
+    if not pool:
+        print("  ❌ Không có Cookie hợp lệ nào được phát hiện trong cấu hình.")
         print("  👉 Hướng dẫn: Hãy mở Microsoft Edge hoặc Chrome, đăng nhập https://gemini.google.com/app")
         print("     hoặc điền GEMINI_SECURE_1PSID vào file .env.")
         return 1
 
-    print(f"  - __Secure-1PSID : {psid[:15]}...{psid[-10:]} (Độ dài: {len(psid)})")
-    print(f"  - __Secure-1PSIDTS: {psidts[:15]}... ({'Có' if psidts else 'Không'})" if psidts else "  - __Secure-1PSIDTS: (Không)")
-    print(f"  - __Secure-1PSIDCC: {psidcc[:15]}... ({'Có' if psidcc else 'Không'})" if psidcc else "  - __Secure-1PSIDCC: (Không)")
+    for idx, acc in enumerate(pool, 1):
+        ts_status = "Có" if acc.psidts else "Không"
+        cc_status = "Có" if acc.psidcc else "Không"
+        print(f"  [{idx}] {acc.name} (ID: {acc.id})")
+        print(f"      - Nguồn: {acc.source}")
+        print(f"      - PSID : {acc.masked_psid()} (TS: {ts_status}, CC: {cc_status})")
 
     # 3. Kết nối thử nghiệm với máy chủ Google Gemini Web
-    print("\n[3] Đang kết nối kiểm tra tài khoản với Google Gemini Web...")
+    print("\n[3] Đang kết nối kiểm tra toàn bộ Cookie Pool với Google Gemini Web...")
     try:
         async def _test_conn():
-            status = await bridge.get_status()
+            status = await bridge.get_status(check_all=True)
+            summary = status.get("pool_summary", {})
+            active_id = status.get("active_account_id")
+
             print("  🎉 KẾT NỐI THÀNH CÔNG!")
-            print(f"  - Trạng thái Abuse : {status.get('abuse_status')}")
-            print(f"  - Model mặc định   : {status.get('default_model')}")
-            print(f"  - Model khả dụng   : {', '.join(status.get('available_models', []))}")
-            quotas = status.get("quotas", {})
-            if quotas:
-                print("  - Quota tài khoản  :")
-                for qname, qval in quotas.items():
-                    print(f"    • {qname}: Còn {qval.get('remaining')}/{qval.get('total')} credits (Reset: {qval.get('reset_time')})")
+            print(f"  - Trạng thái Pool : Total: {summary.get('total')}, Active: {summary.get('active')}, "
+                  f"Rate Limited: {summary.get('rate_limited')}, Auth Error: {summary.get('auth_error')}")
+            print(f"  - Chiến lược Pool : {summary.get('strategy')}")
+            print(f"  - Tài khoản Active: {active_id}")
+            print(f"  - Model mặc định  : {status.get('default_model')}")
+            print(f"  - Model khả dụng  : {', '.join(status.get('available_models', []))}")
+
+            accounts = status.get("accounts", [])
+            if accounts:
+                print("\n  📋 CHI TIẾT TỪNG TÀI KHOẢN TRONG POOL:")
+                for acc in accounts:
+                    is_active_str = "⭐ [ACTIVE HIỆN TẠI]" if acc.get("is_active") else "  [DỰ PHÒNG]"
+                    status_str = acc.get("status")
+                    print(f"    {is_active_str} {acc.get('name')} (ID: {acc.get('id')}) | Trạng thái: {status_str}")
+                    if acc.get("last_error"):
+                        print(f"        ⚠️ Lỗi: {acc.get('last_error')}")
+                    quotas = acc.get("quotas", {})
+                    if quotas:
+                        for qname, qval in quotas.items():
+                            print(f"        • Quota {qname}: Còn {qval.get('remaining')}/{qval.get('total')} credits (Reset: {qval.get('reset_time')})")
 
         asyncio.run(_test_conn())
     except Exception as e:
         print(f"  ❌ Lỗi khi khởi tạo phiên làm việc với Gemini Web: {e}")
         return 1
 
-    print("\n✅ Mọi kiểm tra đã sẵn sàng để tích hợp vào Antigravity / agy!")
+    print("\n✅ Multi-Account Pool đã sẵn sàng để tích hợp vào Antigravity / agy!")
     return 0
 
 
