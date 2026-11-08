@@ -49,8 +49,8 @@ def cmd_check(args):
         return 1
 
     print(f"  - __Secure-1PSID : {psid[:15]}...{psid[-10:]} (Độ dài: {len(psid)})")
-    print(f"  - __Secure-1PSIDTS: {psidts[:15]}... ({'Có' if psidts else 'Không'})")
-    print(f"  - __Secure-1PSIDCC: {psidcc[:15]}... ({'Có' if psidcc else 'Không'})")
+    print(f"  - __Secure-1PSIDTS: {psidts[:15]}... ({'Có' if psidts else 'Không'})" if psidts else "  - __Secure-1PSIDTS: (Không)")
+    print(f"  - __Secure-1PSIDCC: {psidcc[:15]}... ({'Có' if psidcc else 'Không'})" if psidcc else "  - __Secure-1PSIDCC: (Không)")
 
     # 3. Kết nối thử nghiệm với máy chủ Google Gemini Web
     print("\n[3] Đang kết nối kiểm tra tài khoản với Google Gemini Web...")

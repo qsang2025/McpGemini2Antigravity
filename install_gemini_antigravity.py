@@ -50,17 +50,30 @@ def print_banner():
 def check_and_install_dependencies():
     """Kiểm tra và tự động cài đặt các thư viện cần thiết."""
     print("\n[Bước 1/5] Kiểm tra và cài đặt các thư viện Python...")
+    try:
+        import gemini_webapi
+        import mcp
+        import dotenv
+        print("  ✅ Các thư viện cần thiết đã sẵn sàng!")
+        return True
+    except ImportError:
+        pass
+
     req_file = REPO_DIR / "requirements.txt"
     if not req_file.exists():
         print(f"  ❌ Không tìm thấy {req_file}")
         return False
 
-    cmd = [PYTHON_EXE, "-m", "pip", "install", "-r", str(req_file)]
+    # Thử cài đặt qua uv nếu có
+    if shutil.which("uv"):
+        cmd = ["uv", "pip", "install", "--python", str(PYTHON_EXE), "-r", str(req_file)]
+    else:
+        cmd = [PYTHON_EXE, "-m", "pip", "install", "-r", str(req_file)]
     try:
         subprocess.check_call(cmd)
         print("  ✅ Các thư viện cần thiết đã sẵn sàng!")
         return True
-    except subprocess.CalledProcessError as e:
+    except Exception as e:
         print(f"  ❌ Lỗi khi cài đặt thư viện: {e}")
         return False
 
@@ -171,11 +184,14 @@ def install_slash_commands_and_skills():
     wf_src_kg4 = REPO_DIR / "workflows" / "kg4.md"
     wf_src_g4 = REPO_DIR / "workflows" / "g4.md"
 
+    def safe_copy_file(src_path: Path, dst_path: Path):
+        dst_path.write_text(src_path.read_text(encoding="utf-8"), encoding="utf-8")
+
     if wf_src_kg4.exists():
-        shutil.copy2(wf_src_kg4, GLOBAL_WORKFLOWS_DIR / "kg4.md")
+        safe_copy_file(wf_src_kg4, GLOBAL_WORKFLOWS_DIR / "kg4.md")
         print("  ✅ Đã cài đặt Workflow: /kg4 -> ~/.gemini/config/global_workflows/kg4.md")
     if wf_src_g4.exists():
-        shutil.copy2(wf_src_g4, GLOBAL_WORKFLOWS_DIR / "g4.md")
+        safe_copy_file(wf_src_g4, GLOBAL_WORKFLOWS_DIR / "g4.md")
         print("  ✅ Đã cài đặt Workflow: /g4  -> ~/.gemini/config/global_workflows/g4.md")
 
     # 2. Cài đặt Skills
@@ -186,7 +202,7 @@ def install_slash_commands_and_skills():
             skill_dst.mkdir(parents=True, exist_ok=True)
             for f in skill_src.iterdir():
                 if f.is_file():
-                    shutil.copy2(f, skill_dst / f.name)
+                    safe_copy_file(f, skill_dst / f.name)
             print(f"  ✅ Đã cài đặt Skill: @{skill_name} -> ~/.gemini/config/skills/{skill_name}/")
 
     return True
