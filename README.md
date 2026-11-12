@@ -1,5 +1,10 @@
 # 🚀 McpGemini2Antigravity — Cầu Nối Google Gemini 4 (Argon) Với Antigravity
 
+> ⚠️ **THÔNG BÁO QUAN TRỌNG: DỰ ÁN ĐÃ ĐƯỢC HỢP NHẤT**  
+> Kho lưu trữ này đã được hợp nhất chính thức vào repository **[qsang2025/antigravity-skills](https://github.com/qsang2025/antigravity-skills)**.  
+> Toàn bộ mã nguồn MCP Server `gemini-web`, OpenAI API Proxy, bộ cài đặt 1-Click cùng hệ thống kỹ năng chuẩn hoá (`quota-workflow`, `docx`, `xlsx`, `pptx`, `pdf`, `kg4`) hiện được phát triển và duy trì tập trung tại:  
+> 👉 **https://github.com/qsang2025/antigravity-skills**
+
 [![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-brightgreen.svg)](https://www.python.org/)
 [![Antigravity](https://img.shields.io/badge/Antigravity-IDE%20%7C%20App%20%7C%20CLI-purple.svg)](https://antigravity.google)
